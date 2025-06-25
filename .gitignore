@@ -8,6 +8,10 @@
 /user-page-back/
 /user-page-front/
 
+# Локальные файлы sandbox
+sandbox.profile
+sandbox
+
 # macOS
 .DS_Store
 .AppleDouble
