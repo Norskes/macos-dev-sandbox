@@ -17,19 +17,31 @@ A utility for isolating potentially dangerous code during development on macOS u
    ./sandbox-setup.sh
    ```
 
-3. Add the utility to PATH (the setup script will show exact commands):
+3. Add the utility to your shell (the setup script will show exact commands):
 
    ```bash
    # In ~/.zshrc or ~/.bashrc:
-   export PATH="/path/to/macos-sandbox:$PATH"
+   alias sandbox="/path/to/macos-sandbox/sandbox.sh"  # Recommended
 
    # Optional: change base directory (default is ~/Sandbox)
    export SANDBOX_BASE_DIR="/desired/path/to/sandbox"
    ```
 
-4. Apply changes:
+4. Make scripts executable:
+
+   ```bash
+   chmod +x *.sh
+   ```
+
+5. Apply changes:
+
    ```bash
    source ~/.zshrc  # or source ~/.bashrc for Bash
+   ```
+
+6. Verify installation:
+   ```bash
+   sandbox --help  # Should show usage information
    ```
 
 ## Usage
