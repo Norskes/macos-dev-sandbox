@@ -2,6 +2,14 @@
 
 load test_helper
 
+setup() {
+    setup_common
+}
+
+teardown() {
+    teardown_common
+}
+
 @test "SANDBOX_BASE_DIR defaults to HOME/Sandbox" {
     unset SANDBOX_BASE_DIR
     source "./config.sh"
