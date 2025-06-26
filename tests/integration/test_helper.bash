@@ -42,7 +42,9 @@ setup_common() {
     mkdir -p "$TEST_SANDBOX_DIR"
     # Go up two levels from tests/integration to project root
     PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-    cp -r "$PROJECT_ROOT"/* "$TEST_SANDBOX_DIR/" || {
+
+    # Copy only sandbox files
+    cp "$PROJECT_ROOT"/*.sh "$TEST_SANDBOX_DIR/" || {
         echo "Failed to copy sandbox files to test directory" >&2
         return 1
     }
