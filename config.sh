@@ -42,17 +42,17 @@ export SANDBOX_BLOCKED_PATHS=(
     # "$HOME/Work"         # Work files
 )
 
-# Docker settings
-DOCKER_DEFAULT_PORTS=(3000 3001 5000 5173 8000 8080 8081 9000 4200 1337)
-DOCKER_DEFAULT_HOSTS=("localhost" "127.0.0.1" "0.0.0.0" "host.docker.internal")
-DOCKER_CONTAINER_PREFIX="nrsk-sandbox"
-DOCKER_DEFAULT_IMAGE="node:20-slim"
+# Docker configuration (used by sandbox-docker.sh)
+export DOCKER_DEFAULT_PORTS=(3000 3001 5000 5173 8000 8080 8081 9000 4200 1337)
+export DOCKER_DEFAULT_HOSTS=("localhost" "127.0.0.1" "0.0.0.0" "host.docker.internal")
+export DOCKER_CONTAINER_PREFIX="nrsk-sandbox"
+export DOCKER_DEFAULT_IMAGE="node:20-slim"
 
-# Docker resource limits
-DOCKER_MEMORY_LIMIT="2g"
-DOCKER_CPU_LIMIT="2"
-DOCKER_PIDS_LIMIT="100"
-DOCKER_FILES_LIMIT="1024"
+# Resource limits
+export DOCKER_MEMORY_LIMIT="2g"
+export DOCKER_CPU_LIMIT="2"
+export DOCKER_PIDS_LIMIT="100"
+export DOCKER_FILES_LIMIT="1024"
 
 # Check for required commands
 check_requirements() {

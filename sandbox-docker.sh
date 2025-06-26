@@ -51,7 +51,8 @@ check_path_safety() {
 
     # Проверяем на наличие симлинков, ведущих за пределы песочницы
     if [ -L "$path" ]; then
-        local real_path=$(readlink -f "$path")
+        local real_path
+        real_path=$(readlink -f "$path")
         if [[ "$real_path" != "$SANDBOX_BASE_DIR"* ]]; then
             echo "❌ Error: symlink points outside sandbox: $path -> $real_path"
             return 1
@@ -62,7 +63,8 @@ check_path_safety() {
     local current="$path"
     while [[ "$current" != "$SANDBOX_BASE_DIR" && "$current" != "/" ]]; do
         if [ -L "$current" ]; then
-            local real_path=$(readlink -f "$current")
+            local real_path
+            real_path=$(readlink -f "$current")
             if [[ "$real_path" != "$SANDBOX_BASE_DIR"* ]]; then
                 echo "❌ Error: parent directory symlink points outside sandbox: $current -> $real_path"
                 return 1

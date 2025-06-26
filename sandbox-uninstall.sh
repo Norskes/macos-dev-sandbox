@@ -15,7 +15,7 @@ confirm() {
     local default="${2:-n}"
 
     while true; do
-        read -p "$prompt [y/N] " response
+        read -r -p "$prompt [y/N] " response
         response=${response:-$default}
         case $response in
         [Yy]*) return 0 ;;
