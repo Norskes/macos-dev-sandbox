@@ -21,13 +21,19 @@ A utility for isolating potentially dangerous code during development on macOS u
 
    ```bash
    # In ~/.zshrc or ~/.bashrc:
-   export PATH="/path/to/macos-sandbox:$PATH"  # Recommended
+   alias sandbox="/path/to/sandbox/sandbox.sh"  # Recommended
 
    # Optional: change base directory (default is ~/Sandbox)
    export SANDBOX_BASE_DIR="/desired/path/to/sandbox"
    ```
 
-4. Verify installation:
+4. Apply changes to current shell:
+
+   ```bash
+   source ~/.zshrc  # or source ~/.bashrc
+   ```
+
+5. Verify installation:
    ```bash
    sandbox --help  # Should show usage information
    ```
