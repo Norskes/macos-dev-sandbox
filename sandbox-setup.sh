@@ -17,39 +17,9 @@ init_sandbox_dir
 
 echo "🔧 Setting up sandbox in directory: $SANDBOX_BASE_DIR"
 
-# Create security profile
-cat >"$SANDBOX_PROFILE" <<EOF
-(version 1)
-(allow default)
-
-;; Allow reading everywhere (needed for npm/yarn/pnpm)
-(allow file-read*)
-
-;; Allow writing only in specific directories
-(allow file-write*
-    (subpath "$SANDBOX_BASE_DIR")           ;; Sandbox directory
-    (subpath "/private/var/folders")        ;; macOS temporary files
-    (subpath "/private/tmp")                ;; Temporary files
-    (subpath "$HOME/Library/Caches")        ;; Cache
-    (subpath "$HOME/Library/Logs")          ;; Logs
-    (subpath "$HOME/.npm")                  ;; npm cache
-    (subpath "$HOME/.yarn")                 ;; yarn cache
-    (subpath "$HOME/.pnpm-store")           ;; pnpm cache
-    (subpath "$HOME/.cache")                ;; Common cache
-)
-
-;; Network permissions
-(allow network*)
-(allow network-bind)
-(allow network-outbound)
-
-;; System permissions
-(allow process*)
-(allow sysctl*)
-(allow system-socket)
-(allow mach-lookup)
-(allow file-ioctl)
-EOF
+# Generate security profile
+read_paths_str=$(printf "%s\n" "${SANDBOX_READ_PATHS[@]}" | paste -sd "," -)
+generate_security_profile "$SANDBOX_PROFILE" "$SANDBOX_BASE_DIR" "$read_paths_str" "$HOME"
 
 echo "✅ Security profile created: $SANDBOX_PROFILE"
 echo "📝 Base sandbox directory: $SANDBOX_BASE_DIR"
