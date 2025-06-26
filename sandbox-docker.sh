@@ -2,30 +2,12 @@
 
 set -e
 
-# === Defaults ===
-# Common development ports
-PORTS=(
-    3000 # React/Node default
-    3001 # API default
-    5000 # Python/Flask
-    5173 # Vite
-    8000 # Django/Python
-    8080 # Java/Tomcat
-    8081 # Alternative Java
-    9000 # PHP/Laravel
-    4200 # Angular
-    1337 # Strapi
-)
-
-# Allowed hosts
-ALLOWED_HOSTS=(
-    "localhost"
-    "127.0.0.1"
-    "0.0.0.0"
-    "host.docker.internal"
-)
-
-BASE_CONTAINER_NAME="nrsk-sandbox"
+# Load configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || {
+    echo "❌ Error: failed to determine script directory"
+    exit 1
+}
+source "$SCRIPT_DIR/config.sh"
 
 # === Functions ===
 get_available_container_name() {
@@ -58,6 +40,40 @@ get_available_port() {
     echo "$port"
 }
 
+check_path_safety() {
+    local path="$1"
+
+    # Проверяем, что путь находится внутри SANDBOX_BASE_DIR
+    if [[ "$path" != "$SANDBOX_BASE_DIR"* ]]; then
+        echo "❌ Error: path must be inside sandbox: $path"
+        return 1
+    fi
+
+    # Проверяем на наличие симлинков, ведущих за пределы песочницы
+    if [ -L "$path" ]; then
+        local real_path=$(readlink -f "$path")
+        if [[ "$real_path" != "$SANDBOX_BASE_DIR"* ]]; then
+            echo "❌ Error: symlink points outside sandbox: $path -> $real_path"
+            return 1
+        fi
+    fi
+
+    # Проверяем все родительские директории на симлинки
+    local current="$path"
+    while [[ "$current" != "$SANDBOX_BASE_DIR" && "$current" != "/" ]]; do
+        if [ -L "$current" ]; then
+            local real_path=$(readlink -f "$current")
+            if [[ "$real_path" != "$SANDBOX_BASE_DIR"* ]]; then
+                echo "❌ Error: parent directory symlink points outside sandbox: $current -> $real_path"
+                return 1
+            fi
+        fi
+        current=$(dirname "$current")
+    done
+
+    return 0
+}
+
 show_help() {
     echo "Docker Sandbox - secure repository execution in Docker"
     echo ""
@@ -74,6 +90,11 @@ show_help() {
 check_docker() {
     if ! command -v docker &>/dev/null; then
         echo "❌ Docker is not installed"
+        exit 1
+    fi
+
+    if ! docker info >/dev/null 2>&1; then
+        echo "❌ Docker daemon is not running"
         exit 1
     fi
 }
@@ -114,21 +135,34 @@ main() {
         esac
     done
 
-    # Apply custom ports if specified
+    # Use default or custom ports
+    PORTS=("${DOCKER_DEFAULT_PORTS[@]}")
     if [ -n "$CUSTOM_PORTS" ]; then
         IFS=',' read -ra PORTS <<<"$CUSTOM_PORTS"
     fi
 
-    # Apply custom hosts if specified
+    # Use default or custom hosts
+    ALLOWED_HOSTS=("${DOCKER_DEFAULT_HOSTS[@]}")
     if [ -n "$CUSTOM_HOSTS" ]; then
         IFS=',' read -ra ALLOWED_HOSTS <<<"$CUSTOM_HOSTS"
     fi
 
     REPO_NAME=$(basename -s .git "$REPO_URL")
-    BASE_DIR="$HOME/Sandbox"
-    TARGET_DIR="$BASE_DIR/$REPO_NAME"
+    TARGET_DIR="$SANDBOX_BASE_DIR/$REPO_NAME"
 
-    mkdir -p "$BASE_DIR"
+    mkdir -p "$SANDBOX_BASE_DIR"
+
+    # === Security checks ===
+    if ! check_path_safety "$TARGET_DIR"; then
+        exit 1
+    fi
+
+    # Check sandbox directory permissions
+    if [ "$(stat -f "%OLp" "$SANDBOX_BASE_DIR")" != "700" ]; then
+        echo "❌ Error: sandbox directory must have 700 permissions"
+        echo "🔧 Run: chmod 700 $SANDBOX_BASE_DIR"
+        exit 1
+    fi
 
     # === Cloning ===
     if [ ! -d "$TARGET_DIR" ]; then
@@ -141,12 +175,20 @@ main() {
         echo "📁 Repository already exists: $TARGET_DIR"
     fi
 
-    cd "$TARGET_DIR"
+    cd "$TARGET_DIR" || {
+        echo "❌ Failed to change directory to $TARGET_DIR"
+        exit 1
+    }
 
     # === Port preparation ===
     PORT_MAPPINGS=""
     USED_PORTS=()
     for PORT in "${PORTS[@]}"; do
+        # Validate port number
+        if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1024 ] || [ "$PORT" -gt 65535 ]; then
+            echo "❌ Invalid port number: $PORT"
+            exit 1
+        fi
         AVAILABLE_PORT=$(get_available_port "$PORT" "${USED_PORTS[@]}")
         USED_PORTS+=("$AVAILABLE_PORT")
         PORT_MAPPINGS="$PORT_MAPPINGS -p $AVAILABLE_PORT:$PORT"
@@ -159,7 +201,7 @@ main() {
         echo "   ${PORTS[$i]} → ${USED_PORTS[$i]}"
     done
 
-    CONTAINER_NAME=$(get_available_container_name "$BASE_CONTAINER_NAME")
+    CONTAINER_NAME=$(get_available_container_name "$DOCKER_CONTAINER_PREFIX")
     echo "🐳 Using container name: $CONTAINER_NAME"
 
     # Form extra_hosts parameters
@@ -174,16 +216,17 @@ main() {
         --name "$CONTAINER_NAME" \
         --cap-drop=ALL \
         --security-opt=no-new-privileges \
-        --memory=2g \
-        --cpus=2 \
-        --pids-limit=100 \
-        --ulimit nofile=1024:1024 \
+        --security-opt=seccomp=unconfined \
+        --memory="$DOCKER_MEMORY_LIMIT" \
+        --cpus="$DOCKER_CPU_LIMIT" \
+        --pids-limit="$DOCKER_PIDS_LIMIT" \
+        --ulimit nofile="$DOCKER_FILES_LIMIT":"$DOCKER_FILES_LIMIT" \
         --network=bridge \
         ${EXTRA_HOSTS:+"$EXTRA_HOSTS"} \
-        -v "$PWD":/app \
+        -v "$PWD":/app:ro \
         -w /app \
         ${PORT_MAPPINGS:+"$PORT_MAPPINGS"} \
-        node:20-slim \
+        "$DOCKER_DEFAULT_IMAGE" \
         bash
 }
 
