@@ -21,7 +21,7 @@ A utility for isolating potentially dangerous code during development on macOS u
 
    ```bash
    # In ~/.zshrc or ~/.bashrc:
-   alias sandbox="/path/to/macos-sandbox/sandbox.sh"  # Recommended
+   export PATH="/path/to/macos-sandbox:$PATH"  # Recommended
 
    # Optional: change base directory (default is ~/Sandbox)
    export SANDBOX_BASE_DIR="/desired/path/to/sandbox"
@@ -151,15 +151,8 @@ macos-sandbox/
 
 ```bash
 cd tests
-./run_tests.sh          # Run all tests (19 tests)
+./run_tests.sh          # Run all tests (19 integration tests)
 ```
-
-**Test Results:**
-
-- ✅ **19 tests, 0 failures**
-- ✅ All security blocks verified
-- ✅ npm/Node.js workflow confirmed
-- ✅ Docker mode functionality tested
 
 ### Security Testing
 
