@@ -13,6 +13,7 @@ setup() {
     # Copy and source sandbox-docker.sh
     cp "$PROJECT_ROOT/sandbox-docker.sh" "$BATS_TEST_TMPDIR/"
     cp "$PROJECT_ROOT/config.sh" "$BATS_TEST_TMPDIR/"
+    cp "$PROJECT_ROOT/security.sh" "$BATS_TEST_TMPDIR/"
 
     cd "$BATS_TEST_TMPDIR"
     source config.sh
