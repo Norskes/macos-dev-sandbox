@@ -4,8 +4,9 @@ load test_helper
 
 # Load functions for testing
 setup() {
-    # Load common functions
-    source "$BATS_TEST_DIRNAME/../sandbox-docker.sh"
+    # Load common functions - go up two levels to project root
+    PROJECT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+    source "$PROJECT_ROOT/sandbox-docker.sh"
 
     # Mock docker command
     function docker() {

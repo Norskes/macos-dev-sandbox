@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Integration Test Runner - Full tests for local development
-# Requires macOS and all dependencies (sandbox-exec, Docker, etc.)
+# CI Test Runner - Fast tests for GitHub Actions
+# Only runs logic tests without external dependencies
 
 set -euo pipefail
 
@@ -9,26 +9,10 @@ set -euo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔄 Running Integration Tests (Full Suite)${NC}"
+echo -e "${YELLOW}🔄 Running CI Tests (Logic Only)${NC}"
 echo "=================================================="
-
-# Check if running on macOS
-if [[ "$(uname)" != "Darwin" ]]; then
-    echo -e "${YELLOW}⚠️  Integration tests require macOS${NC}"
-    echo -e "${BLUE}💡 For CI tests (logic only), run: ./run_ci_tests.sh${NC}"
-    exit 1
-fi
-
-# Check for sandbox-exec
-if ! command -v sandbox-exec >/dev/null 2>&1; then
-    echo -e "${RED}❌ sandbox-exec not found${NC}"
-    echo -e "${YELLOW}Integration tests require macOS with sandbox-exec${NC}"
-    echo -e "${BLUE}💡 For CI tests (logic only), run: ./run_ci_tests.sh${NC}"
-    exit 1
-fi
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,24 +41,24 @@ if ! command -v bats >/dev/null 2>&1; then
     echo -e "${GREEN}✅ Installed Bats to $HOME/.local/bin/bats${NC}"
 fi
 
-# Run integration tests
-echo -e "${YELLOW}🧪 Running Integration Tests...${NC}"
+# Run CI tests only
+echo -e "${YELLOW}🧪 Running CI Tests...${NC}"
 
 # Count tests
 total_tests=0
-for test_file in integration/*.bats; do
+for test_file in ci/*.bats; do
     if [ -f "$test_file" ]; then
         test_count=$(grep -c "^@test" "$test_file" || echo 0)
         total_tests=$((total_tests + test_count))
     fi
 done
 
-echo "Found $total_tests integration tests to run"
+echo "Found $total_tests CI tests to run"
 echo ""
 
 # Run each test file
 exit_code=0
-for test_file in integration/*.bats; do
+for test_file in ci/*.bats; do
     if [ -f "$test_file" ]; then
         echo -e "${YELLOW}Running $(basename "$test_file"):${NC}"
         if ! bats "$test_file"; then
@@ -85,15 +69,11 @@ for test_file in integration/*.bats; do
 done
 
 if [ $exit_code -eq 0 ]; then
-    echo -e "${GREEN}✅ All integration tests passed!${NC}"
-    echo -e "${GREEN}System is ready for production use${NC}"
+    echo -e "${GREEN}✅ All CI tests passed!${NC}"
+    echo -e "${GREEN}Ready for GitHub Actions${NC}"
 else
-    echo -e "${RED}❌ Some integration tests failed${NC}"
-    echo -e "${RED}Fix issues before deployment${NC}"
+    echo -e "${RED}❌ Some CI tests failed${NC}"
+    echo -e "${RED}Fix issues before pushing${NC}"
 fi
-
-# Suggest running CI tests as well
-echo ""
-echo -e "${BLUE}💡 To run fast CI tests (for GitHub Actions): ./run_ci_tests.sh${NC}"
 
 exit $exit_code

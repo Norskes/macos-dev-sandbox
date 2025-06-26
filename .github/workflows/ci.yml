@@ -1,0 +1,35 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci-tests:
+    name: Logic Tests (Cross-Platform)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Bats
+        run: |
+          git clone https://github.com/bats-core/bats-core.git
+          cd bats-core
+          sudo ./install.sh /usr/local
+          which bats
+          bats --version
+
+      - name: Run CI Tests
+        run: |
+          cd tests
+          chmod +x run_ci_tests.sh
+          ./run_ci_tests.sh
+
+      - name: Verify test results
+        run: |
+          echo "✅ CI tests completed successfully"
+          echo "These tests verify core logic without external dependencies"

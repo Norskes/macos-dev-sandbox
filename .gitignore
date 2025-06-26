@@ -3,6 +3,7 @@
 !.github/
 !.github/*
 !tests/
+!tests/*/
 
 # Исключаем директории проектов в песочнице
 /user-page-back/

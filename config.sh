@@ -74,7 +74,14 @@ init_sandbox_dir() {
 # Get relative path from base directory
 get_relative_path() {
     local path="$1"
-    echo "${path#"$SANDBOX_BASE_DIR"/}"
+    # Remove trailing slash from path
+    path="${path%/}"
+
+    if [ "$path" = "$SANDBOX_BASE_DIR" ]; then
+        echo "."
+    else
+        echo "${path#"$SANDBOX_BASE_DIR"/}"
+    fi
 }
 
 # Export functions and variables
