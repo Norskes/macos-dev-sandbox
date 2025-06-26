@@ -53,22 +53,33 @@ else
     echo "ℹ️  Sandbox symlink not found"
 fi
 
-# Show instructions for cleaning up shell configuration
+# Try to remove alias from shell configuration files
+echo "🧹 Removing shell configuration..."
+
+# Remove from common shell RC files
+for shell_file in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.profile"; do
+    if [ -f "$shell_file" ]; then
+        # Remove export PATH line
+        remove_line_from_file "$shell_file" "export PATH=\"$SCRIPT_DIR:\$PATH\""
+        # Remove export SANDBOX_BASE_DIR line
+        remove_line_from_file "$shell_file" "export SANDBOX_BASE_DIR=\"$SANDBOX_BASE_DIR\""
+        # Remove any alias sandbox lines (flexible pattern)
+        sed -i '' '/alias sandbox=/d' "$shell_file" 2>/dev/null || true
+    fi
+done
+
+echo "✅ Removed configuration from shell files"
+
+# Show manual cleanup instructions if needed
 echo "
-📝 To complete uninstallation, remove these lines from your ~/.zshrc or ~/.bashrc:
+📝 If you manually added sandbox configuration to other files, remove these lines:
     export PATH=\"$SCRIPT_DIR:\$PATH\"
     export SANDBOX_BASE_DIR=\"$SANDBOX_BASE_DIR\"
-"
+    alias sandbox=\"$SCRIPT_DIR/sandbox.sh\"
 
-# Optionally remove sandbox directory
-if [ -d "$SANDBOX_BASE_DIR" ]; then
-    if confirm "❓ Do you want to remove the sandbox directory ($SANDBOX_BASE_DIR)?"; then
-        rm -rf "$SANDBOX_BASE_DIR"
-        echo "✅ Removed sandbox directory: $SANDBOX_BASE_DIR"
-    else
-        echo "ℹ️  Keeping sandbox directory: $SANDBOX_BASE_DIR"
-    fi
-fi
+⚠️  Sandbox directory preserved: $SANDBOX_BASE_DIR
+    This directory may contain your projects and should be removed manually if needed.
+"
 
 echo "
 ✨ Uninstallation complete!
